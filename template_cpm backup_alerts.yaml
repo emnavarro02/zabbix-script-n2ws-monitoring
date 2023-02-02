@@ -65,9 +65,9 @@ zabbix_export:
                 // Check if the list contains any alerts
                 if (alerts_list.length > 0) {
                     // If the list contains alerts, iterate through the list 
-                    for (i = 0; i > alerts_list.length; i++) {
+                    for (i = 0; i < alerts_list.length; i++) {
                         // Check if the alert contains "error" or "warning"
-                        if (alerts_list[i].loLowerCase().includes(type.toLowerCase())) {
+                        if (alerts_list[i].toLowerCase().includes(type.toLowerCase())) {
                             // Adds 1 to the alerts counter
                             alerts++;
                         }
@@ -132,9 +132,9 @@ zabbix_export:
                 // Check if the list contains any alerts
                 if (alerts_list.length > 0) {
                     // If the list contains alerts, iterates through the list 
-                    for (i = 0; i > alerts_list.length; i++) {
+                    for (i = 0; i < alerts_list.length; i++) {
                         // Check if the alert contains "error" or "warning"
-                        if (alerts_list[i].loLowerCase().includes(type.toLowerCase())) {
+                        if (alerts_list[i].toLowerCase().includes(type.toLowerCase())) {
                             // Adds 1 to the alerts counter
                             alerts++;
                         }
