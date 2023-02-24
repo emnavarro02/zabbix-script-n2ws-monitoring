@@ -32,6 +32,7 @@ There are no discovery rules in this template.
 |---------------------------|---------------------------------------------------|--------|-------------------------|
 | Number of errors in CPM   | Retrieve the number of error alerts in CPM API    | Script | cpm.errors              |
 | Number of warnings in CPM | Retrieve the number of warining alerts in CPM API | Script | cpm.warning             |
+| Number of informations in CPM | Retrieve the number of information notifications in CPM API | Script | cpm.info             |
 
 ### Triggers
 There are no triggers in this template.
@@ -40,3 +41,4 @@ There are no triggers in this template.
 Please report any issues with the template at https://github.com/emnavarro02/zabbix-script-n2ws-monitoring/issues.
 
 You can also provide feedback, discuss the template or ask for help with it at ZABBIX forums.
+
