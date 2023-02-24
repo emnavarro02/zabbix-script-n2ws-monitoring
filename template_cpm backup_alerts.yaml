@@ -1,20 +1,22 @@
 zabbix_export:
-  version: "6.2"
-  date: "2023-02-02T10:51:24Z"
+  version: '6.2'
+  date: '2023-02-24T12:26:54Z'
   template_groups:
     - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
       name: Templates/Applications
   templates:
     - uuid: 98a83193b39340adaf9c5b8f5de945bc
-      template: "CPM Backup"
-      name: "CPM Backup"
+      template: 'T_App_CPM Backup'
+      name: 'T_App_CPM Backup'
       description: |
         This template will add items to monitor the CPM backup tool via its API.
-
+        
+        Monitoring has been tested on N2WS CPM Bacup 4.1.1a
+        
         MACROS:
         * This template adds 2 macros to the hosts: {$API_KEY} and {$CPM_URL}} 
         !Make sure you update the Macros' values in the associated hosts!
-
+        
         REQUIREMENTS
         * Zabbix server must have network connectivity to the CPM backup server 
         * Zabbix server must have HTTP/S access to the CPM backup server
@@ -22,11 +24,11 @@ zabbix_export:
         - name: Templates/Applications
       items:
         - uuid: d551af8f9cbf4a37a8e1a5c6a00db24e
-          name: "Number of errors in CPM"
+          name: 'Number of errors in CPM'
           type: SCRIPT
           key: cpm.errors
           delay: 1h
-          trends: "0"
+          trends: '0'
           value_type: TEXT
           params: |
             try {
@@ -35,65 +37,139 @@ zabbix_export:
                 api_key = params.api_key;
                 cpm_url = params.endpoint;
                 var type = params.count_type;
-
+            
                 // Set the data as the api_key 
                 var data = 'api_key=' + api_key;
                 var alerts = 0;
-
+            
                 // Create a new HttpRequest
                 req = new HttpRequest();
-
+            
                 // Add the header
                 req.addHeader('Accept: application/json; version=1.0');
-
+            
                 // Request the access token
                 auth_response = req.post(cpm_url + '/api/token/obtain/api_key/', data);
-
+            
                 // Parses the response to get the access token
                 json_obj = JSON.parse(auth_response);
                 access_token = json_obj['access'];
-
+            
                 // Add the access token to the headers
                 req.addHeader('Authorization: Bearer ' + access_token);
-
+            
                 // Retrieve the alerts from CPM Backup api
                 response = req.get(cpm_url + '/api/alerts/');
-
+                //return response.length; 
+            
                 // Parse response as JSON and retrieve the list of alerts
                 alerts_list = JSON.parse(response);
-
+            
                 // Check if the list contains any alerts
                 if (alerts_list.length > 0) {
                     // If the list contains alerts, iterate through the list 
                     for (i = 0; i < alerts_list.length; i++) {
                         // Check if the alert contains "error" or "warning"
-                        if (alerts_list[i].toLowerCase().includes(type.toLowerCase())) {
-                            // Adds 1 to the alerts counter
-                            alerts++;
+                        if (alerts_list[i].severity.toLowerCase().includes(type.toLowerCase())) {
+                        // Adds 1 to the alerts counter
+                        alerts++;
                         }
-                    }
+                    } 
                 }
             } catch (error) {
-                Zabbix.log(4, 'Failed accessing CPM Backup API: ' + error);
+                Zabbix.log(1, 'Failed accessing CPM Backup API: ' + error);
                 alerts = -1;
+                // return error;
             }
-
+            
             // Return number of alerts
             return alerts;
           timeout: 5s
           parameters:
             - name: api_key
-              value: "{$API_KEY}"
+              value: '{$API_KEY}'
             - name: endpoint
-              value: "{$CPM_URL}"
+              value: '{$CPM_URL}'
             - name: count_type
-              value: error
+              value: E
+        - uuid: 0191ed4b836041a383aa87fe84fcbe16
+          name: 'Number of information in CPM'
+          type: SCRIPT
+          key: cpm.info
+          delay: 1h
+          trends: '0'
+          value_type: CHAR
+          params: |
+            try {
+                // Retrieve parameters defined in the Zabbix item
+                var params = JSON.parse(value);
+                api_key = params.api_key;
+                cpm_url = params.endpoint;
+                var type = params.count_type;
+            
+                // Set the data as the api_key 
+                var data = 'api_key=' + api_key;
+                var alerts = 0;
+            
+                // Create a new HttpRequest
+                req = new HttpRequest();
+            
+                // Add the header
+                req.addHeader('Accept: application/json; version=1.0');
+            
+                // Request the access token
+                auth_response = req.post(cpm_url + '/api/token/obtain/api_key/', data);
+            
+                // Parses the response to get the access token
+                json_obj = JSON.parse(auth_response);
+                access_token = json_obj['access'];
+            
+                // Add the access token to the headers
+                req.addHeader('Authorization: Bearer ' + access_token);
+            
+                // Retrieve the alerts from CPM Backup API
+                response = req.get(cpm_url + '/api/alerts/');
+                //return response.length; 
+            
+                // Parse response as JSON and retrieve the list of alerts
+                alerts_list = JSON.parse(response);
+            
+                // Check if the list contains any alerts
+                if (alerts_list.length > 0) {
+                    // If the list contains alerts iterate through the list 
+                    for (i = 0; i < alerts_list.length; i++) {
+                        // Check if the alert contains an "error" or "warning"
+                        if (alerts_list[i].severity.toLowerCase().includes(type.toLowerCase())) {
+                        // Adds 1 to the alerts counter
+                        alerts++;
+                        }
+                    } 
+                }
+            } catch (error) {
+                Zabbix.log(1, 'Failed accessing CPM Backup API: ' + error);
+                alerts = -1;
+                // return error;
+            }
+            
+            // Return the number of alerts
+            return alerts;
+          description: |
+            Obtain the number of "Information" notifications from CPM Backup API. 
+            
+            Make sure you set the {$API_KEY} and {$CPM_URL} macros accordingly.
+          parameters:
+            - name: api_key
+              value: '{$API_KEY}'
+            - name: count_type
+              value: I
+            - name: endpoint
+              value: '{$CPM_URL}'
         - uuid: 460d3a3e19fc4390a479f68c7c537d68
-          name: "Number of warnings in CPM"
+          name: 'Number of warnings in CPM'
           type: SCRIPT
           key: cpm.warning
           delay: 1h
-          trends: "0"
+          trends: '0'
           value_type: TEXT
           params: |
             try {
@@ -102,62 +178,64 @@ zabbix_export:
                 api_key = params.api_key;
                 cpm_url = params.endpoint;
                 var type = params.count_type;
-
+            
                 // Set the data as the api_key 
                 var data = 'api_key=' + api_key;
                 var alerts = 0;
-
+            
                 // Create a new HttpRequest
                 req = new HttpRequest();
-
+            
                 // Add the header
                 req.addHeader('Accept: application/json; version=1.0');
-
+            
                 // Request the access token
                 auth_response = req.post(cpm_url + '/api/token/obtain/api_key/', data);
-
+            
                 // Parses the response to get the access token
                 json_obj = JSON.parse(auth_response);
                 access_token = json_obj['access'];
-
+            
                 // Add the access token to the headers
                 req.addHeader('Authorization: Bearer ' + access_token);
-
+            
                 // Retrieve the alerts from CPM Backup api
                 response = req.get(cpm_url + '/api/alerts/');
-
+                //return response.length; 
+            
                 // Parse response as JSON and retrieve the list of alerts
                 alerts_list = JSON.parse(response);
-
+            
                 // Check if the list contains any alerts
                 if (alerts_list.length > 0) {
-                    // If the list contains alerts, iterates through the list 
+                    // If the list contains alerts, iterate through the list 
                     for (i = 0; i < alerts_list.length; i++) {
                         // Check if the alert contains "error" or "warning"
-                        if (alerts_list[i].toLowerCase().includes(type.toLowerCase())) {
-                            // Adds 1 to the alerts counter
-                            alerts++;
+                        if (alerts_list[i].severity.toLowerCase().includes(type.toLowerCase())) {
+                        // Adds 1 to the alerts counter
+                        alerts++;
                         }
-                    }
+                    } 
                 }
             } catch (error) {
-                Zabbix.log(4, 'Failed accessing CPM Backup API: ' + error);
+                Zabbix.log(1, 'Failed accessing CPM Backup API: ' + error);
                 alerts = -1;
+                // return error;
             }
-
+            
             // Return number of alerts
             return alerts;
           timeout: 5s
           parameters:
             - name: api_key
-              value: "{$API_KEY}"
+              value: '{$API_KEY}'
             - name: count_type
-              value: warning
+              value: W
             - name: endpoint
-              value: "{$CPM_URL}"
+              value: '{$CPM_URL}'
       macros:
-        - macro: "{$API_KEY}"
+        - macro: '{$API_KEY}'
           type: SECRET_TEXT
-          description: "The CPM Backup API key. Refer to CPM documentation on how to obtain the API key,"
-        - macro: "{$CPM_URL}"
-          description: "The CPM Backup endpoint URL (e.g., https://cpmbackup.mydomain.com)"
+          description: 'The CPM Backup API key. Refer to CPM documentation on how to obtain the API key,'
+        - macro: '{$CPM_URL}'
+          description: 'The CPM Backup endpoint URL (e.g., https://backup.mydomain.com)'
